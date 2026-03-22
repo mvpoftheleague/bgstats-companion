@@ -1,0 +1,8 @@
+## Interface: 11502
+## Title: BgStats
+## Notes: Tracks battleground stats and saves them for upload
+## Author: bgstats
+## Version: 1.0.0
+## SavedVariables: BgStatsDB
+
+BgStats.lua

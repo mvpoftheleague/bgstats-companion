@@ -1,0 +1,5 @@
+dist/
+assets/logo.ico
+rsrc.syso
+companion.exe
+*.log
