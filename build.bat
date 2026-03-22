@@ -25,10 +25,12 @@ if %ERRORLEVEL% neq 0 (
 )
 rsrc -manifest app.manifest -ico assets\logo.ico -o rsrc.syso
 
-:: Sync addon files from the addon directory (always use latest)
-echo Syncing addon files...
-copy /Y "..\addon\BgStats.lua" "assets\BgStats.lua" >nul
-copy /Y "..\addon\BgStats.toc" "assets\BgStats.toc" >nul
+:: Sync addon files from the addon directory if available (monorepo only)
+if exist "..\addon\BgStats.lua" (
+    echo Syncing addon files...
+    copy /Y "..\addon\BgStats.lua" "assets\BgStats.lua" >nul
+    copy /Y "..\addon\BgStats.toc" "assets\BgStats.toc" >nul
+)
 
 :: Build the Windows executable (no console window)
 go build -ldflags="-H=windowsgui -s -w" -o "%OUTPUT_DIR%\%BINARY%" .
