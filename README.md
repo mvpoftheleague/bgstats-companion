@@ -1,4 +1,4 @@
-# ClassicBG Companion
+# BgStats Companion
 
 A lightweight Windows tray application that watches your WoW Classic Era SavedVariables and automatically uploads battleground match data to [bgstats.cc](https://bgstats.cc).
 
