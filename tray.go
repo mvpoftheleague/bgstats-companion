@@ -58,7 +58,7 @@ func runApp(cfg *Config, onReady func(setStatus func(string))) error {
 	addAction(menu, "Settings", func() { openSettings(cfg) })
 	menu.Actions().Add(walk.NewSeparatorAction())
 	addAction(menu, "Open Config Folder", func() { openFolder(configDir()) })
-	addAction(menu, "Open bgstats.gg", func() { openURL("https://bgstats.gg") })
+	addAction(menu, "Open bgstats.cc", func() { openURL("https://bgstats.cc") })
 	menu.Actions().Add(walk.NewSeparatorAction())
 	addAction(menu, "Exit", func() {
 		ni.SetVisible(false)

@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	defaultBackendURL    = "https://api.bgstats.gg"
+	defaultBackendURL    = "https://bgstats.cc"
 	defaultPollInterval  = 30
 	appName              = "BgStats Companion"
 	configFileName       = "config.json"
