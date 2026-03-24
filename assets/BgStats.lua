@@ -195,7 +195,7 @@ function BgStats_CaptureScoreboard()
 
     local winner = (winnerFaction == 0) and "HORDE" or "ALLIANCE"
 
-    local matchKey = currentBg .. ":" .. (currentInstanceId or 0) .. ":" .. matchStartTime
+    local matchKey = currentBg .. ":" .. (currentInstanceId or 0) .. ":" .. matchEndTime
     if BgStatsDB.uploaded[matchKey] then
         DEFAULT_CHAT_FRAME:AddMessage("|cffffff00[BgStats]|r Match already recorded.")
         return

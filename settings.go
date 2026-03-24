@@ -30,7 +30,7 @@ func openSettings(cfg *Config) {
 }
 
 func runSettingsWindow(cfg *Config) error {
-	var mw *walk.MainWindow
+	var mw *walk.Dialog
 	var wowDirEdit *walk.LineEdit
 	var statusLabel *walk.Label
 	var logEdit *walk.TextEdit
@@ -52,7 +52,7 @@ func runSettingsWindow(cfg *Config) error {
 		}
 	}
 
-	err := MainWindow{
+	err := Dialog{
 		AssignTo: &mw,
 		Title:    "BgStats Companion — Settings",
 		Layout:   VBox{Margins: Margins{Top: 16, Left: 20, Right: 20, Bottom: 16}, Spacing: 10},
@@ -156,20 +156,20 @@ func runSettingsWindow(cfg *Config) error {
 
 							refreshStatus()
 							walk.MsgBox(mw, appName, "Settings saved!", walk.MsgBoxIconInformation)
-							mw.Close()
+							mw.Close(0)
 						},
 					},
 					PushButton{
 						Text:    "Cancel",
 						MinSize: Size{Width: 90},
 						OnClicked: func() {
-							mw.Close()
+							mw.Close(0)
 						},
 					},
 				},
 			},
 		},
-	}.Create()
+	}.Create(nil)
 	if err != nil {
 		return err
 	}
@@ -214,7 +214,7 @@ func runSettingsWindow(cfg *Config) error {
 	// Minimizing closes the window instead of shrinking to the taskbar.
 	mw.SizeChanged().Attach(func() {
 		if win.IsIconic(mw.Handle()) {
-			mw.Close()
+			mw.Close(0)
 		}
 	})
 

@@ -1,4 +1,4 @@
-module github.com/mvpoftheleague/classicbg-companion
+module github.com/mvpoftheleague/bgstats-companion
 
 go 1.21
 
