@@ -55,6 +55,7 @@ func runSettingsWindow(cfg *Config) error {
 	err := Dialog{
 		AssignTo: &mw,
 		Title:    "BgStats Companion — Settings",
+		MinSize:  Size{Width: 530, Height: 420},
 		Layout:   VBox{Margins: Margins{Top: 16, Left: 20, Right: 20, Bottom: 16}, Spacing: 10},
 		Children: []Widget{
 
