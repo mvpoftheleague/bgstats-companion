@@ -80,8 +80,8 @@ jobs:
         run: |
           iwr https://aka.ms/wingetcreate/latest -OutFile wingetcreate.exe
           .\wingetcreate.exe update `
-            --id "mvpoftheleague.BgStatsCompanion" `
             --version "${{ github.ref_name }}" `
             --urls "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/BgStatsCompanion.exe" `
             --submit `
-            --token "$env:WINGET_TOKEN"
+            --token "$env:WINGET_TOKEN" `
+            "mvpoftheleague.BgStatsCompanion"
