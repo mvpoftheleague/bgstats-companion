@@ -28,43 +28,6 @@ jobs:
           if not exist dist mkdir dist
           go build -ldflags="-H=windowsgui -s -w" -o dist\BgStatsCompanion.exe .
 
-      # ---------------------------------------------------------------------------
-      # Authenticode signing with Certum Open Source Code Signing certificate.
-      # Removes the "Unknown Publisher" UAC warning. With an OV certificate,
-      # Microsoft SmartScreen reputation still builds over time (download count).
-      # Only EV certificates bypass SmartScreen immediately (requires USB token).
-      #
-      # Setup:
-      #   1. Apply at https://www.certum.eu/en/cert_offer_en/open-source-code-signing/
-      #   2. Once issued, export the certificate + private key as a PFX file.
-      #   3. Add two GitHub secrets to this repo:
-      #        CERTUM_CERT_PFX      – base64-encoded PFX  (base64 -w0 cert.pfx)
-      #        CERTUM_CERT_PASSWORD – PFX password
-      # ---------------------------------------------------------------------------
-      - name: Sign binary (Authenticode / Certum OSS)
-        if: ${{ secrets.CERTUM_CERT_PFX != '' }}
-        shell: powershell
-        env:
-          CERTUM_CERT_PFX: ${{ secrets.CERTUM_CERT_PFX }}
-          CERTUM_CERT_PASSWORD: ${{ secrets.CERTUM_CERT_PASSWORD }}
-        run: |
-          $pfxPath = Join-Path $env:RUNNER_TEMP "cert.pfx"
-          [IO.File]::WriteAllBytes($pfxPath, [Convert]::FromBase64String($env:CERTUM_CERT_PFX))
-          try {
-            $pass = ConvertTo-SecureString $env:CERTUM_CERT_PASSWORD -AsPlainText -Force
-            Import-PfxCertificate -FilePath $pfxPath -CertStoreLocation Cert:\CurrentUser\My -Password $pass | Out-Null
-            & "C:\Program Files (x86)\Windows Kits\10\bin\x64\signtool.exe" sign `
-              /fd sha256 `
-              /tr http://timestamp.certum.pl `
-              /td sha256 `
-              /n "BgStats Companion" `
-              dist\BgStatsCompanion.exe
-            & "C:\Program Files (x86)\Windows Kits\10\bin\x64\signtool.exe" verify `
-              /pa dist\BgStatsCompanion.exe
-          } finally {
-            Remove-Item $pfxPath -Force
-          }
-
       - name: Install Cosign
         uses: sigstore/cosign-installer@v3
 
