@@ -1,0 +1,124 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write   # create GitHub release
+  id-token: write   # Sigstore keyless signing via OIDC
+
+jobs:
+  release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Build
+        shell: cmd
+        run: |
+          if not exist dist mkdir dist
+          go build -ldflags="-H=windowsgui -s -w" -o dist\BgStatsCompanion.exe .
+
+      # ---------------------------------------------------------------------------
+      # Authenticode signing with Certum Open Source Code Signing certificate.
+      # Removes the "Unknown Publisher" UAC warning. With an OV certificate,
+      # Microsoft SmartScreen reputation still builds over time (download count).
+      # Only EV certificates bypass SmartScreen immediately (requires USB token).
+      #
+      # Setup:
+      #   1. Apply at https://www.certum.eu/en/cert_offer_en/open-source-code-signing/
+      #   2. Once issued, export the certificate + private key as a PFX file.
+      #   3. Add two GitHub secrets to this repo:
+      #        CERTUM_CERT_PFX      – base64-encoded PFX  (base64 -w0 cert.pfx)
+      #        CERTUM_CERT_PASSWORD – PFX password
+      # ---------------------------------------------------------------------------
+      - name: Sign binary (Authenticode / Certum OSS)
+        if: ${{ secrets.CERTUM_CERT_PFX != '' }}
+        shell: powershell
+        env:
+          CERTUM_CERT_PFX: ${{ secrets.CERTUM_CERT_PFX }}
+          CERTUM_CERT_PASSWORD: ${{ secrets.CERTUM_CERT_PASSWORD }}
+        run: |
+          $pfxPath = Join-Path $env:RUNNER_TEMP "cert.pfx"
+          [IO.File]::WriteAllBytes($pfxPath, [Convert]::FromBase64String($env:CERTUM_CERT_PFX))
+          try {
+            $pass = ConvertTo-SecureString $env:CERTUM_CERT_PASSWORD -AsPlainText -Force
+            Import-PfxCertificate -FilePath $pfxPath -CertStoreLocation Cert:\CurrentUser\My -Password $pass | Out-Null
+            & "C:\Program Files (x86)\Windows Kits\10\bin\x64\signtool.exe" sign `
+              /fd sha256 `
+              /tr http://timestamp.certum.pl `
+              /td sha256 `
+              /n "BgStats Companion" `
+              dist\BgStatsCompanion.exe
+            & "C:\Program Files (x86)\Windows Kits\10\bin\x64\signtool.exe" verify `
+              /pa dist\BgStatsCompanion.exe
+          } finally {
+            Remove-Item $pfxPath -Force
+          }
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3
+
+      # Sigstore keyless signing — provides a public, verifiable supply-chain
+      # attestation (no key management needed, uses GitHub Actions OIDC).
+      - name: Sign binary (Sigstore)
+        working-directory: dist
+        shell: bash
+        run: |
+          cosign sign-blob --yes \
+            --bundle BgStatsCompanion.exe.bundle \
+            BgStatsCompanion.exe
+
+      - name: Create GitHub Release
+        id: release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "BgStats Companion ${{ github.ref_name }}"
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          generate_release_notes: true
+          files: |
+            dist/BgStatsCompanion.exe
+            dist/BgStatsCompanion.exe.bundle
+
+  winget:
+    needs: release
+    runs-on: windows-latest
+    # Only submit stable releases (no pre-release tags like v1.0.0-beta.1)
+    if: ${{ !contains(github.ref_name, '-') }}
+
+    steps:
+      # ---------------------------------------------------------------------------
+      # Submits a PR to microsoft/winget-pkgs automatically after each release.
+      # wingetcreate picks up the .exe URL from the GitHub release assets.
+      #
+      # First-time setup:
+      #   1. Package identifier: mvpoftheleague.BgStatsCompanion
+      #   2. Submit the initial manifest manually:
+      #        wingetcreate new https://github.com/mvpoftheleague/<repo>/releases/download/v1.0.0/BgStatsCompanion.exe
+      #      Fill in the prompts, then open the PR against microsoft/winget-pkgs.
+      #      Once merged, subsequent releases are handled automatically by this job.
+      #   3. Add a GitHub secret WINGET_TOKEN — a classic PAT with public_repo scope
+      #      (needs to fork and PR microsoft/winget-pkgs on your behalf).
+      # ---------------------------------------------------------------------------
+      - name: Submit to winget
+        shell: pwsh
+        env:
+          WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}
+        run: |
+          iwr https://aka.ms/wingetcreate/latest -OutFile wingetcreate.exe
+          .\wingetcreate.exe update `
+            --id "mvpoftheleague.BgStatsCompanion" `
+            --version "${{ github.ref_name }}" `
+            --urls "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/BgStatsCompanion.exe" `
+            --submit `
+            --token "$env:WINGET_TOKEN"
