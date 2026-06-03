@@ -92,11 +92,11 @@ local function initDB()
 end
 
 
--- Zone name → BG type. Works regardless of instance ID or map ID quirks.
-local BG_BY_ZONE = {
-    ["Warsong Gulch"] = "WSG",
-    ["Arathi Basin"]  = "AB",
-    ["Alterac Valley"] = "AV",
+-- Map ID → BG type. Locale-independent (works on any language client).
+local BG_BY_MAP_ID = {
+    [489] = "WSG",  -- Warsong Gulch
+    [529] = "AB",   -- Arathi Basin
+    [30]  = "AV",   -- Alterac Valley
 }
 
 local BG_STAT_INDICES = {
@@ -136,13 +136,13 @@ end)
 
 function BgStats_OnZoneChange()
     initDB()
-    local zoneName = GetRealZoneText()
-    local bg = BG_BY_ZONE[zoneName]
+    local mapId = select(8, GetInstanceInfo()) or 0
+    local bg = BG_BY_MAP_ID[mapId]
 
     if bg then
         if not currentBg then
             currentBg = bg
-            currentInstanceId = select(8, GetInstanceInfo()) or 0
+            currentInstanceId = mapId
             -- Restore start time if this looks like the same BG (reload mid-match)
             if BgStatsDB.inProgress.bg == bg and BgStatsDB.inProgress.instanceId == currentInstanceId then
                 matchStartTime = BgStatsDB.inProgress.matchStart
