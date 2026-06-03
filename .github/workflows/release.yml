@@ -89,11 +89,5 @@ jobs:
           iwr https://aka.ms/wingetcreate/latest -OutFile wingetcreate.exe
           $version = "${{ github.ref_name }}".TrimStart('v')
           $url = "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/BgStatsCompanion.exe"
-          Write-Output "Version: $version"
-          Write-Output "URL: $url"
-          Write-Output "Token set: $($env:WINGET_CREATE_PR_TOKEN -ne '')"
-          .\wingetcreate.exe update --version $version --urls $url --out ./manifest mvpoftheleague.BgStatsCompanion
-          if ($LASTEXITCODE -ne 0) { Write-Error "Package lookup failed"; exit $LASTEXITCODE }
-          Write-Output "Manifest generated, submitting..."
-          .\wingetcreate.exe update --version $version --urls $url --submit --no-open mvpoftheleague.BgStatsCompanion
+          .\wingetcreate.exe update mvpoftheleague.BgStatsCompanion -v $version -u $url --submit --no-open -t $env:WINGET_CREATE_PR_TOKEN
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
