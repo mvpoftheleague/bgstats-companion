@@ -87,8 +87,9 @@ jobs:
           WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}
         run: |
           iwr https://aka.ms/wingetcreate/latest -OutFile wingetcreate.exe
+          $version = "${{ github.ref_name }}".TrimStart('v')
           .\wingetcreate.exe update `
-            --version "${{ github.ref_name }}" `
+            --version "$version" `
             --urls "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/BgStatsCompanion.exe" `
             --submit `
             --token "$env:WINGET_TOKEN" `
