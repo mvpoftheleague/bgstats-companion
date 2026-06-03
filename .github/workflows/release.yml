@@ -81,6 +81,14 @@ jobs:
       #   3. Add a GitHub secret WINGET_TOKEN — a classic PAT with public_repo scope
       #      (needs to fork and PR microsoft/winget-pkgs on your behalf).
       # ---------------------------------------------------------------------------
+      - name: Sync winget-pkgs fork
+        shell: pwsh
+        env:
+          WINGET_TOKEN: ${{ secrets.WINGET_TOKEN }}
+        run: |
+          $headers = @{ Authorization = "Bearer $env:WINGET_TOKEN"; Accept = "application/vnd.github+json"; "Content-Type" = "application/json" }
+          Invoke-RestMethod -Method Post -Uri "https://api.github.com/repos/mvpoftheleague/winget-pkgs/merge-upstream" -Headers $headers -Body '{"branch":"master"}'
+
       - name: Submit to winget
         shell: pwsh
         env:
